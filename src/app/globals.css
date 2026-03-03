@@ -1052,3 +1052,99 @@ html, body {
     padding: 1.8rem 1.5rem;
   }
 }
+
+/* ---- HP HUD ---- */
+.hp-hud {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 50;
+  display: flex;
+  gap: 0.3rem;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 50, 50, 0.3);
+  border-radius: 14px;
+  padding: 0.5rem 0.8rem;
+}
+
+.hp-heart {
+  font-size: 1.5rem;
+  transition: transform 0.2s;
+}
+
+.hp-heart-active {
+  animation: heartPulse 1.5s ease-in-out infinite;
+}
+
+.hp-heart-empty {
+  opacity: 0.4;
+  filter: grayscale(1);
+}
+
+/* ---- DAMAGE FLASH ---- */
+.damage-flash {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  background: rgba(255, 0, 0, 0.35);
+  pointer-events: none;
+  animation: damageFlashAnim 0.3s ease-out forwards;
+}
+
+@keyframes damageFlashAnim {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ---- GAME OVER ---- */
+.gameover-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.gameover-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  background: rgba(30, 10, 10, 0.9);
+  border: 1px solid rgba(255, 50, 50, 0.4);
+  border-radius: 24px;
+  padding: 2.5rem 2rem;
+  max-width: 380px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 0 60px rgba(255, 0, 0, 0.15);
+}
+
+.gameover-emoji {
+  font-size: 3rem;
+}
+
+.gameover-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #ff6b6b;
+  text-shadow: 0 0 20px rgba(255, 50, 50, 0.5);
+}
+
+.gameover-text {
+  color: #ffb6b6;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.celebration-hp-bonus {
+  color: #ffd700;
+  font-size: 0.9rem;
+  font-weight: 600;
+}

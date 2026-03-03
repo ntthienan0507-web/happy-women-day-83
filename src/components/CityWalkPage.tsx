@@ -11,11 +11,11 @@ const CityWalkScene = dynamic(() => import("./CityWalkScene"), { ssr: false });
 const Joystick = dynamic(() => import("./Joystick"), { ssr: false });
 
 const MAPS: { id: MapType; name: string; icon: string; desc: string; color: string }[] = [
-  { id: "city", name: "Phố Đêm", icon: "🌃", desc: "Dắt tay nhau đi giữa phố đêm lung linh", color: "#4a90d9" },
-  { id: "beach", name: "Biển Hoàng Hôn", icon: "🏖️", desc: "Ngắm hoàng hôn bên bãi biển lãng mạn", color: "#ff6b35" },
-  { id: "sakura", name: "Vườn Hoa Anh Đào", icon: "🌸", desc: "Dạo dưới những cánh hoa anh đào rơi", color: "#ff69b4" },
-  { id: "garden", name: "Khu Vườn Thần Tiên", icon: "🧚", desc: "Lạc vào khu vườn đom đóm huyền ảo", color: "#c084fc" },
-  { id: "ocean", name: "Đáy Đại Dương", icon: "🐠", desc: "Khám phá thế giới dưới đại dương", color: "#06b6d4" },
+  { id: "city", name: "Phố Đêm", icon: "🌃", desc: "Robot canh gác phố đêm lung linh", color: "#4a90d9" },
+  { id: "beach", name: "Biển Hoàng Hôn", icon: "🏖️", desc: "Cua biển rượt đuổi trên bãi cát", color: "#ff6b35" },
+  { id: "sakura", name: "Vườn Anh Đào", icon: "🌸", desc: "Ma dễ thương lẩn khuất trong hoa", color: "#ff69b4" },
+  { id: "garden", name: "Vườn Thần Tiên", icon: "🧚", desc: "Slime nhầy nhụa chặn đường đi", color: "#c084fc" },
+  { id: "ocean", name: "Đáy Đại Dương", icon: "🐠", desc: "Cá nóc gai nguy hiểm rình rập", color: "#06b6d4" },
 ];
 
 export default function CityWalkPage() {
@@ -26,12 +26,17 @@ export default function CityWalkPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [celebrating, setCelebrating] = useState(false);
   const [celebrationWish, setCelebrationWish] = useState("");
-  const [mapKey, setMapKey] = useState(0); // key to force remount = new random target
+  const [mapKey, setMapKey] = useState(0);
+  const [hp, setHp] = useState(3);
+  const [invincible, setInvincible] = useState(false);
+  const [gameOver, setGameOver] = useState(false);
+  const [damageFlash, setDamageFlash] = useState(false);
   const keysRef = useKeyboard();
 
   const titleRef = useRef<HTMLDivElement>(null);
   const wishRef = useRef<HTMLDivElement>(null);
   const celebRef = useRef<HTMLDivElement>(null);
+  const gameOverRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsMobile("ontouchstart" in window || navigator.maxTouchPoints > 0);
@@ -41,6 +46,9 @@ export default function CityWalkPage() {
   useEffect(() => {
     if (!selectedMap) return;
     setCelebrating(false);
+    setGameOver(false);
+    setHp(3);
+    setInvincible(false);
     setShowWish(false);
     if (titleRef.current) {
       gsap.fromTo(titleRef.current, { opacity: 0, y: -40 }, { opacity: 1, y: 0, duration: 1.5, ease: "elastic.out(1, 0.5)", delay: 0.3 });
@@ -57,7 +65,7 @@ export default function CityWalkPage() {
 
   // Auto cycle wishes
   useEffect(() => {
-    if (!showWish || celebrating) return;
+    if (!showWish || celebrating || gameOver) return;
     const interval = setInterval(() => {
       if (wishRef.current) {
         gsap.to(wishRef.current, {
@@ -70,7 +78,7 @@ export default function CityWalkPage() {
       }
     }, 10000);
     return () => clearInterval(interval);
-  }, [showWish, celebrating]);
+  }, [showWish, celebrating, gameOver]);
 
   const nextWish = useCallback(() => {
     if (!wishRef.current) return;
@@ -83,13 +91,36 @@ export default function CityWalkPage() {
     });
   }, []);
 
-  // Celebration callback
+  // HP / Damage system
+  const handleHit = useCallback(() => {
+    if (invincible || gameOver || celebrating) return;
+    setHp((prev) => {
+      const newHp = prev - 1;
+      if (newHp <= 0) {
+        setGameOver(true);
+      }
+      return newHp;
+    });
+    // Damage flash
+    setDamageFlash(true);
+    setTimeout(() => setDamageFlash(false), 300);
+    // Invincibility frames
+    setInvincible(true);
+    setTimeout(() => setInvincible(false), 2000);
+  }, [invincible, gameOver, celebrating]);
+
+  // Game over animation
+  useEffect(() => {
+    if (!gameOver || !gameOverRef.current) return;
+    gsap.fromTo(gameOverRef.current, { opacity: 0, scale: 0.5 }, { opacity: 1, scale: 1, duration: 0.8, ease: "back.out(1.7)" });
+  }, [gameOver]);
+
+  // Celebration
   const handleCelebration = useCallback(() => {
     setCelebrating(true);
     setCelebrationWish(getRandomWish());
   }, []);
 
-  // Celebration animation
   useEffect(() => {
     if (!celebrating || !celebRef.current) return;
     gsap.fromTo(celebRef.current, { opacity: 0, scale: 0.5 }, { opacity: 1, scale: 1, duration: 1, ease: "elastic.out(1, 0.4)" });
@@ -97,12 +128,15 @@ export default function CityWalkPage() {
 
   const handlePlayAgain = useCallback(() => {
     setCelebrating(false);
-    setMapKey((k) => k + 1); // remount scene = new random target
+    setGameOver(false);
+    setHp(3);
+    setMapKey((k) => k + 1);
   }, []);
 
   const handleChangeMap = useCallback(() => {
     setSelectedMap(null);
     setCelebrating(false);
+    setGameOver(false);
     setShowWish(false);
   }, []);
 
@@ -120,8 +154,8 @@ export default function CityWalkPage() {
           ))}
         </div>
         <div className="map-select-content">
-          <h1 className="map-select-title">Mình đi đâu nhỉ? 💕</h1>
-          <p className="map-select-sub">Chọn nơi để cùng anh dạo chơi — tìm chữ 8/3 để tung hoa nha!</p>
+          <h1 className="map-select-title">Chọn mê cung! 🏰</h1>
+          <p className="map-select-sub">Tìm chữ 8/3 trong mê cung — tránh quái vật, em có 3 mạng!</p>
           <div className="map-grid">
             {MAPS.map((m) => (
               <button key={m.id} className="map-card" onClick={() => { setSelectedMap(m.id); setMapKey((k) => k + 1); }}
@@ -141,10 +175,41 @@ export default function CityWalkPage() {
   // ===== GAME SCREEN =====
   return (
     <div className="walk-page">
-      <CityWalkScene key={mapKey} map={selectedMap} keysRef={keysRef} onCelebration={handleCelebration} />
+      {/* Damage flash overlay */}
+      {damageFlash && <div className="damage-flash" />}
+
+      <CityWalkScene
+        key={mapKey}
+        map={selectedMap}
+        keysRef={keysRef}
+        onCelebration={handleCelebration}
+        hp={hp}
+        onHit={handleHit}
+        invincible={invincible}
+        gameOver={gameOver}
+      />
 
       {/* Mobile joystick */}
-      {isMobile && !celebrating && <Joystick keysRef={keysRef} />}
+      {isMobile && !celebrating && !gameOver && <Joystick keysRef={keysRef} />}
+
+      {/* Game Over overlay */}
+      {gameOver && !celebrating && (
+        <div className="gameover-overlay">
+          <div ref={gameOverRef} className="gameover-card">
+            <div className="gameover-emoji">💔😢</div>
+            <h2 className="gameover-title">Game Over!</h2>
+            <p className="gameover-text">Đừng buồn, thử lại nha vợ yêu!</p>
+            <div className="celebration-buttons">
+              <button className="celebration-btn celebration-btn-primary" onClick={handlePlayAgain}>
+                🔄 Thử lại
+              </button>
+              <button className="celebration-btn" onClick={handleChangeMap}>
+                🗺️ Đổi map
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Celebration overlay */}
       {celebrating && (
@@ -153,9 +218,12 @@ export default function CityWalkPage() {
             <div className="celebration-emoji">🎉🌸💕🎊</div>
             <h2 className="celebration-title">Happy Women&apos;s Day!</h2>
             <p className="celebration-wish">{celebrationWish}</p>
+            <p className="celebration-hp-bonus">
+              {hp === 3 ? "🌟 Perfect! Không mất mạng nào!" : `Còn ${hp}/3 ❤️`}
+            </p>
             <div className="celebration-buttons">
               <button className="celebration-btn celebration-btn-primary" onClick={handlePlayAgain}>
-                🔄 Chơi lại (vị trí mới)
+                🔄 Chơi lại (maze mới)
               </button>
               <button className="celebration-btn" onClick={handleChangeMap}>
                 🗺️ Đổi map
@@ -169,14 +237,14 @@ export default function CityWalkPage() {
       )}
 
       {/* UI Overlay */}
-      {showUI && !celebrating && (
+      {showUI && !celebrating && !gameOver && (
         <div className="walk-overlay">
           <div ref={titleRef} className="walk-title-section" style={{ opacity: 0 }}>
             <h1 className="walk-main-title">
               <span className="walk-title-small">
                 {MAPS.find((m) => m.id === selectedMap)?.icon} {MAPS.find((m) => m.id === selectedMap)?.name}
               </span>
-              <span className="walk-title-big">Tìm chữ 8/3 💕</span>
+              <span className="walk-title-big">Tìm 8/3 trong mê cung!</span>
             </h1>
           </div>
 
@@ -196,28 +264,19 @@ export default function CityWalkPage() {
 
           <div className="walk-bottom-bar">
             <div className="walk-controls-hint">
-              {isMobile ? "Dùng joystick để di chuyển → Tìm chữ 8/3" : "WASD di chuyển → Tìm chữ 8/3 để tung hoa!"}
+              {isMobile ? "Joystick di chuyển — Tránh quái, tìm 8/3!" : "WASD di chuyển — Tránh quái vật, tìm chữ 8/3!"}
             </div>
             <div className="walk-bottom-buttons">
-              <button className="walk-btn" onClick={() => setShowUI(false)}>
-                👁️ Ẩn UI
-              </button>
-              <button className="walk-btn" onClick={handleChangeMap}>
-                🗺️ Đổi map
-              </button>
-              <a href="/" className="walk-btn" style={{ textDecoration: "none" }}>
-                🌹 Trang chính
-              </a>
+              <button className="walk-btn" onClick={() => setShowUI(false)}>👁️ Ẩn UI</button>
+              <button className="walk-btn" onClick={handleChangeMap}>🗺️ Đổi map</button>
+              <a href="/" className="walk-btn" style={{ textDecoration: "none" }}>🌹 Trang chính</a>
             </div>
           </div>
         </div>
       )}
 
-      {/* Show UI button when hidden */}
-      {!showUI && !celebrating && (
-        <button className="walk-show-ui-btn" onClick={() => setShowUI(true)}>
-          👁️
-        </button>
+      {!showUI && !celebrating && !gameOver && (
+        <button className="walk-show-ui-btn" onClick={() => setShowUI(true)}>👁️</button>
       )}
     </div>
   );

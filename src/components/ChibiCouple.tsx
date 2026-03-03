@@ -4,6 +4,8 @@ import { useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import type { KeyState } from "./useKeyboard";
+import type { MazeData } from "./MazeGenerator";
+import { isWall } from "./MazeGenerator";
 
 // ==================== SINGLE CHIBI ====================
 function ChibiBody({ isFemale, walkPhase }: { isFemale: boolean; walkPhase: number }) {
@@ -98,18 +100,29 @@ export default function ChibiCouple({
   keysRef,
   boundary = 12,
   playerPosRef,
+  maze,
+  invincible = false,
+  startPos,
 }: {
   keysRef: React.RefObject<KeyState>;
   boundary?: number;
   playerPosRef?: React.MutableRefObject<THREE.Vector3>;
+  maze?: MazeData;
+  invincible?: boolean;
+  startPos?: [number, number];
 }) {
   const groupRef = useRef<THREE.Group>(null);
-  const posRef = useRef(new THREE.Vector3(0, 0, 0));
+  const posRef = useRef(new THREE.Vector3(
+    startPos ? startPos[0] : 0,
+    0,
+    startPos ? startPos[1] : 0
+  ));
   const rotRef = useRef(0);
   const walkRef = useRef(0);
   const isMoving = useRef(false);
   const velRef = useRef(new THREE.Vector3());
   const { camera } = useThree();
+  const flashRef = useRef(0);
 
   // Heart above couple
   const heartRef = useRef<THREE.Mesh>(null);
@@ -119,6 +132,15 @@ export default function ChibiCouple({
     const keys = keysRef.current;
     const speed = 3;
     const rotSpeed = 3;
+
+    // Invincibility flash
+    if (invincible) {
+      flashRef.current += delta * 10;
+      groupRef.current.visible = Math.sin(flashRef.current) > 0;
+    } else {
+      flashRef.current = 0;
+      groupRef.current.visible = true;
+    }
 
     // Calculate movement direction
     const moveDir = new THREE.Vector3();
@@ -152,19 +174,42 @@ export default function ChibiCouple({
       while (diff < -Math.PI) diff += Math.PI * 2;
       rotRef.current += diff * rotSpeed * delta;
 
-      // Move
-      velRef.current.lerp(worldDir.multiplyScalar(speed), 0.1);
-      posRef.current.add(velRef.current.clone().multiplyScalar(delta));
+      // Move with wall collision
+      const moveVec = worldDir.multiplyScalar(speed);
+      velRef.current.lerp(moveVec, 0.1);
+      const movement = velRef.current.clone().multiplyScalar(delta);
 
-      // Boundary clamp
-      posRef.current.x = Math.max(-boundary, Math.min(boundary, posRef.current.x));
-      posRef.current.z = Math.max(-boundary, Math.min(boundary, posRef.current.z));
+      if (maze) {
+        // Try X movement
+        const newX = posRef.current.x + movement.x;
+        if (!isWall(newX, posRef.current.z, maze, 0.25)) {
+          posRef.current.x = newX;
+        }
+        // Try Z movement
+        const newZ = posRef.current.z + movement.z;
+        if (!isWall(posRef.current.x, newZ, maze, 0.25)) {
+          posRef.current.z = newZ;
+        }
+      } else {
+        posRef.current.add(movement);
+        // Boundary clamp (no maze)
+        posRef.current.x = Math.max(-boundary, Math.min(boundary, posRef.current.x));
+        posRef.current.z = Math.max(-boundary, Math.min(boundary, posRef.current.z));
+      }
 
       // Walk animation
       walkRef.current += delta * 8;
     } else {
       velRef.current.lerp(new THREE.Vector3(), 0.15);
-      posRef.current.add(velRef.current.clone().multiplyScalar(delta));
+      const movement = velRef.current.clone().multiplyScalar(delta);
+      if (maze) {
+        const newX = posRef.current.x + movement.x;
+        if (!isWall(newX, posRef.current.z, maze, 0.25)) posRef.current.x = newX;
+        const newZ = posRef.current.z + movement.z;
+        if (!isWall(posRef.current.x, newZ, maze, 0.25)) posRef.current.z = newZ;
+      } else {
+        posRef.current.add(movement);
+      }
     }
 
     // Bob when walking
