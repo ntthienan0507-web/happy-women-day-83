@@ -12,7 +12,6 @@ export default function WomanDayPage() {
   const [bloomProgress, setBloomProgress] = useState(0);
   const [currentWish, setCurrentWish] = useState("");
   const [currentImage, setCurrentImage] = useState("");
-  const [scene, setScene] = useState<"flower" | "heart">("flower");
   const [wishIndex, setWishIndex] = useState(0);
   const [showEnvelope, setShowEnvelope] = useState(true);
   const [isOpened, setIsOpened] = useState(false);
@@ -123,10 +122,6 @@ export default function WomanDayPage() {
     setTimeout(() => setIsOpened(true), 600);
   }, []);
 
-  const toggleScene = useCallback(() => {
-    setScene((prev) => (prev === "flower" ? "heart" : "flower"));
-  }, []);
-
   const nextWish = useCallback(() => {
     setWishIndex((prev) => {
       const next = (prev + 1) % wishes.length;
@@ -214,7 +209,7 @@ export default function WomanDayPage() {
 
       {/* 3D Scene */}
       <div className="scene-container">
-        <Scene3D bloomProgress={bloomProgress} scene={scene} />
+        <Scene3D bloomProgress={bloomProgress} />
       </div>
 
       {/* Content overlay */}
@@ -259,11 +254,6 @@ export default function WomanDayPage() {
               {wishIndex + 1} / {wishes.length}
             </span>
           </div>
-
-          {/* Scene toggle */}
-          <button onClick={toggleScene} className="scene-toggle-btn">
-            {scene === "flower" ? "🌹 → ❤️ Xem trái tim" : "❤️ → 🌹 Xem hoa nở"}
-          </button>
 
           {/* Link to city walk page */}
           <a href="/walk" className="scene-toggle-btn" style={{ textDecoration: "none" }}>
