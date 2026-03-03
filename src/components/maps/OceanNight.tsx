@@ -5,25 +5,11 @@ import { useFrame } from "@react-three/fiber";
 import { Stars } from "@react-three/drei";
 import * as THREE from "three";
 
-// ---- Animated Ocean Floor ----
+// ---- Static Ocean Floor ----
 function OceanFloor() {
-  const ref = useRef<THREE.Mesh>(null);
-  useFrame((s) => {
-    if (!ref.current) return;
-    const geo = ref.current.geometry as THREE.PlaneGeometry;
-    const pos = geo.attributes.position;
-    const t = s.clock.elapsedTime;
-    for (let i = 0; i < pos.count; i++) {
-      const x = pos.getX(i);
-      const y = pos.getY(i);
-      pos.setZ(i, Math.sin(x * 0.5 + t * 0.8) * 0.15 + Math.cos(y * 0.3 + t * 0.6) * 0.1);
-    }
-    pos.needsUpdate = true;
-  });
-
   return (
-    <mesh ref={ref} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.3, 0]}>
-      <planeGeometry args={[40, 40, 40, 40]} />
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.3, 0]}>
+      <planeGeometry args={[40, 40]} />
       <meshStandardMaterial color="#0a2a4a" roughness={0.3} metalness={0.5} />
     </mesh>
   );
@@ -34,20 +20,12 @@ function WaterSurface() {
   const ref = useRef<THREE.Mesh>(null);
   useFrame((s) => {
     if (!ref.current) return;
-    const geo = ref.current.geometry as THREE.PlaneGeometry;
-    const pos = geo.attributes.position;
-    const t = s.clock.elapsedTime;
-    for (let i = 0; i < pos.count; i++) {
-      const x = pos.getX(i);
-      const y = pos.getY(i);
-      pos.setZ(i, Math.sin(x * 0.3 + t) * 0.08 + Math.cos(y * 0.4 + t * 0.7) * 0.06);
-    }
-    pos.needsUpdate = true;
+    ref.current.position.y = 0.6 + Math.sin(s.clock.elapsedTime * 0.5) * 0.05;
   });
 
   return (
     <mesh ref={ref} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.6, 0]}>
-      <planeGeometry args={[40, 40, 32, 32]} />
+      <planeGeometry args={[40, 40]} />
       <meshStandardMaterial color="#1a5a8a" transparent opacity={0.35} roughness={0.1} metalness={0.6} side={THREE.DoubleSide} />
     </mesh>
   );
@@ -55,32 +33,15 @@ function WaterSurface() {
 
 // ---- Coral ----
 function Coral({ position, color = "#ff4060" }: { position: [number, number, number]; color?: string }) {
-  const ref = useRef<THREE.Group>(null);
-  useFrame((s) => {
-    if (ref.current) ref.current.rotation.z = Math.sin(s.clock.elapsedTime * 0.8 + position[0]) * 0.05;
-  });
-
   return (
-    <group ref={ref} position={position}>
-      {/* Branches */}
-      {Array.from({ length: 5 }).map((_, i) => {
-        const angle = (i / 5) * Math.PI * 2;
-        const h = 0.3 + Math.random() * 0.4;
+    <group position={position}>
+      {Array.from({ length: 3 }).map((_, i) => {
+        const angle = (i / 3) * Math.PI * 2;
+        const h = 0.3 + Math.random() * 0.3;
         return (
-          <mesh key={i} position={[Math.cos(angle) * 0.1, h / 2, Math.sin(angle) * 0.1]} rotation={[Math.sin(angle) * 0.3, 0, Math.cos(angle) * 0.3]}>
-            <cylinderGeometry args={[0.015, 0.04, h, 5]} />
-            <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.15} />
-          </mesh>
-        );
-      })}
-      {/* Tips */}
-      {Array.from({ length: 5 }).map((_, i) => {
-        const angle = (i / 5) * Math.PI * 2;
-        const h = 0.3 + Math.random() * 0.4;
-        return (
-          <mesh key={`t${i}`} position={[Math.cos(angle) * 0.12, h, Math.sin(angle) * 0.12]}>
-            <sphereGeometry args={[0.025, 5, 5]} />
-            <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.3} />
+          <mesh key={i} position={[Math.cos(angle) * 0.08, h / 2, Math.sin(angle) * 0.08]} rotation={[Math.sin(angle) * 0.3, 0, Math.cos(angle) * 0.3]}>
+            <cylinderGeometry args={[0.015, 0.04, h, 4]} />
+            <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.2} />
           </mesh>
         );
       })}
@@ -144,7 +105,6 @@ function Jellyfish({ position, color = "#c084fc" }: { position: [number, number,
           <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.3} transparent opacity={0.5} />
         </mesh>
       ))}
-      <pointLight color={color} intensity={0.3} distance={2} />
     </group>
   );
 }
@@ -207,7 +167,6 @@ function TreasureChest({ position }: { position: [number, number, number] }) {
         <boxGeometry args={[0.06, 0.06, 0.02]} />
         <meshStandardMaterial color="#ffd700" emissive="#ffa500" emissiveIntensity={1} />
       </mesh>
-      <pointLight position={[0, 0.2, 0]} color="#ffd700" intensity={0.5} distance={1.5} />
     </group>
   );
 }
@@ -284,7 +243,7 @@ export default function OceanNight() {
   const coralPositions = useMemo(() => {
     const arr: { pos: [number, number, number]; color: string }[] = [];
     const colors = ["#ff4060", "#ff69b4", "#c084fc", "#ffa500", "#06d6a0", "#ff6b81"];
-    for (let i = 0; i < 25; i++) {
+    for (let i = 0; i < 10; i++) {
       arr.push({
         pos: [(Math.random() - 0.5) * 20, -0.25, (Math.random() - 0.5) * 16],
         color: colors[Math.floor(Math.random() * colors.length)],
@@ -302,13 +261,13 @@ export default function OceanNight() {
       <hemisphereLight args={["#1a3a5e", "#020a18", 0.3]} />
 
       {/* Faint stars visible through water surface */}
-      <Stars radius={50} depth={20} count={500} factor={2} fade speed={0.3} />
+      <Stars radius={50} depth={20} count={300} factor={2} fade speed={0.3} />
 
       {/* Ocean environment */}
       <OceanFloor />
       <WaterSurface />
       <LightRays />
-      <Bubbles count={45} />
+      <Bubbles count={15} />
 
       {/* Ground for walking */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.28, 0]}>
@@ -320,7 +279,7 @@ export default function OceanNight() {
       {coralPositions.map((c, i) => <Coral key={i} position={c.pos} color={c.color} />)}
 
       {/* Seaweed patches */}
-      {Array.from({ length: 15 }).map((_, i) => (
+      {Array.from({ length: 6 }).map((_, i) => (
         <Seaweed key={i} position={[(Math.random() - 0.5) * 18, -0.28, (Math.random() - 0.5) * 14]} />
       ))}
 
@@ -328,14 +287,10 @@ export default function OceanNight() {
       <Jellyfish position={[-3, 0.1, -2]} color="#c084fc" />
       <Jellyfish position={[4, 0.2, -4]} color="#ff69b4" />
       <Jellyfish position={[-5, 0, 3]} color="#06d6a0" />
-      <Jellyfish position={[6, 0.15, 1]} color="#4ac0ff" />
-      <Jellyfish position={[0, 0.25, -6]} color="#ffa500" />
-      <Jellyfish position={[-7, 0.1, -5]} color="#ff6b81" />
 
       {/* Fish */}
-      <FishSchool center={[3, 0, 2]} count={8} color="#ffa500" />
-      <FishSchool center={[-4, 0.1, -3]} count={6} color="#ff69b4" />
-      <FishSchool center={[0, -0.1, 5]} count={10} color="#4ac0ff" />
+      <FishSchool center={[3, 0, 2]} count={5} color="#ffa500" />
+      <FishSchool center={[-4, 0.1, -3]} count={4} color="#ff69b4" />
 
       {/* Treasure */}
       <TreasureChest position={[5, -0.25, -5]} />

@@ -218,8 +218,6 @@ export default function Enemies({
       {enemies.current.map((_, i) => (
         <group key={i} ref={(el) => { groupRefs.current[i] = el; }}>
           <EnemyModel mapType={mapType} walkPhase={walkPhaseRef.current} />
-          {/* Enemy danger glow */}
-          <pointLight color="#ff0000" intensity={0.3} distance={1.5} position={[0, 0.3, 0]} />
         </group>
       ))}
     </group>

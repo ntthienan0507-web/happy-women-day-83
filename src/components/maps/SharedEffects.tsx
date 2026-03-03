@@ -8,18 +8,8 @@ import * as THREE from "three";
 // ---- Floating Hearts ----
 export function FloatingHearts3D({ count = 30 }: { count?: number }) {
   const refs = useRef<(THREE.Mesh | null)[]>([]);
-  const geo = useMemo(() => {
-    const shape = new THREE.Shape();
-    const s = 1;
-    shape.moveTo(0, s * 0.3);
-    shape.bezierCurveTo(0, s * 0.45, -s * 0.15, s * 0.6, -s * 0.35, s * 0.6);
-    shape.bezierCurveTo(-s * 0.7, s * 0.6, -s * 0.7, s * 0.225, -s * 0.7, s * 0.225);
-    shape.bezierCurveTo(-s * 0.7, 0, -s * 0.35, -s * 0.25, 0, -s * 0.5);
-    shape.bezierCurveTo(s * 0.35, -s * 0.25, s * 0.7, 0, s * 0.7, s * 0.225);
-    shape.bezierCurveTo(s * 0.7, s * 0.225, s * 0.7, s * 0.6, s * 0.35, s * 0.6);
-    shape.bezierCurveTo(s * 0.15, s * 0.6, 0, s * 0.45, 0, s * 0.3);
-    return new THREE.ExtrudeGeometry(shape, { depth: 0.1, bevelEnabled: true, bevelSize: 0.02, bevelThickness: 0.02, bevelSegments: 2 });
-  }, []);
+  // Use simple sphere instead of expensive ExtrudeGeometry
+  const geo = useMemo(() => new THREE.SphereGeometry(0.5, 6, 6), []);
 
   interface HD { pos: THREE.Vector3; vel: THREE.Vector3; sc: number; rot: number; rs: number; color: THREE.Color; life: number; ml: number; }
   const hearts = useRef<HD[]>(Array.from({ length: count }, () => makeH()));

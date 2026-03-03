@@ -80,8 +80,7 @@ function Waves() {
 function Sun() {
   return (
     <group position={[0, 3, -18]}>
-      <mesh><sphereGeometry args={[2, 16, 16]} /><meshStandardMaterial color="#ff6b35" emissive="#ff4500" emissiveIntensity={1} /></mesh>
-      <pointLight color="#ff6b35" intensity={3} distance={40} />
+      <mesh><sphereGeometry args={[2, 16, 16]} /><meshStandardMaterial color="#ff6b35" emissive="#ff4500" emissiveIntensity={1.2} /></mesh>
     </group>
   );
 }
@@ -128,7 +127,7 @@ export default function BeachSunset() {
       <ambientLight intensity={0.3} color="#ffc8a0" />
       <directionalLight position={[0, 5, -15]} intensity={0.8} color="#ff8c50" />
       <hemisphereLight args={["#ff6b35", "#1e1e2e", 0.3]} />
-      <Stars radius={50} depth={30} count={1500} factor={3} fade speed={0.5} />
+      <Stars radius={50} depth={30} count={600} factor={3} fade speed={0.5} />
 
       <Sun />
       <Ocean />

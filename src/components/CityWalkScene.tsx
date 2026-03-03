@@ -132,7 +132,7 @@ export default function CityWalkScene({
         camera={{ position: [0, 3, 6], fov: 50 }}
         style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}
         gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
-        dpr={[1, 1.5]}
+        dpr={[1, 1]}
         shadows={false}
       >
         <Suspense fallback={null}>
@@ -145,7 +145,7 @@ export default function CityWalkScene({
             invincible={invincible}
             startPos={startPos}
           />
-          <FloatingHearts3D count={15} />
+          <FloatingHearts3D count={6} />
 
           {/* Enemies */}
           {!celebrating && !gameOver && (

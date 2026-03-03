@@ -77,7 +77,6 @@ function Fountain() {
           <meshStandardMaterial color="#87ceeb" emissive="#4a90d9" emissiveIntensity={0.5} transparent opacity={0.5} />
         </mesh>
       ))}
-      <pointLight position={[0, 0.5, 0]} color="#4a90d9" intensity={1} distance={4} />
     </group>
   );
 }
@@ -86,13 +85,6 @@ function Fountain() {
 function FairyLights({ from, to, count = 10, color = "#ffd700" }: {
   from: [number, number, number]; to: [number, number, number]; count?: number; color?: string;
 }) {
-  const refs = useRef<(THREE.PointLight | null)[]>([]);
-  useFrame((s) => {
-    refs.current.forEach((r, i) => {
-      if (r) r.intensity = 0.3 + Math.sin(s.clock.elapsedTime * 2 + i * 0.8) * 0.2;
-    });
-  });
-
   const points = useMemo(() => {
     const pts: [number, number, number][] = [];
     for (let i = 0; i <= count; i++) {
@@ -107,25 +99,12 @@ function FairyLights({ from, to, count = 10, color = "#ffd700" }: {
 
   return (
     <group>
-      {/* Wire */}
-      {points.slice(0, -1).map((p, i) => {
-        const next = points[i + 1];
-        const mid: [number, number, number] = [(p[0] + next[0]) / 2, (p[1] + next[1]) / 2, (p[2] + next[2]) / 2];
-        const len = Math.sqrt((next[0] - p[0]) ** 2 + (next[1] - p[1]) ** 2 + (next[2] - p[2]) ** 2);
-        return (
-          <mesh key={`w${i}`} position={mid}
-            rotation={[0, 0, Math.atan2(next[1] - p[1], Math.sqrt((next[0] - p[0]) ** 2 + (next[2] - p[2]) ** 2))]}>
-            <cylinderGeometry args={[0.005, 0.005, len, 2]} />
-            <meshStandardMaterial color="#555" />
-          </mesh>
-        );
-      })}
-      {/* Bulbs */}
+      {/* Bulbs only - no pointLights */}
       {points.map((p, i) => (
-        <group key={i} position={p}>
-          <mesh><sphereGeometry args={[0.035, 6, 6]} /><meshStandardMaterial color={color} emissive={color} emissiveIntensity={1.5} /></mesh>
-          <pointLight ref={(el) => { refs.current[i] = el; }} color={color} intensity={0.3} distance={1.5} />
-        </group>
+        <mesh key={i} position={p}>
+          <sphereGeometry args={[0.035, 6, 6]} />
+          <meshStandardMaterial color={color} emissive={color} emissiveIntensity={1.5} />
+        </mesh>
       ))}
     </group>
   );
@@ -176,7 +155,7 @@ export default function FairyGarden() {
   const flowerPositions = useMemo(() => {
     const positions: { pos: [number, number, number]; color: string; scale: number }[] = [];
     const colors = ["#ff69b4", "#ff1493", "#ff85a2", "#ffd700", "#e91e63", "#ba68c8", "#ff4081", "#f06292"];
-    for (let i = 0; i < 60; i++) {
+    for (let i = 0; i < 20; i++) {
       const angle = Math.random() * Math.PI * 2;
       const r = 2 + Math.random() * 10;
       positions.push({
@@ -195,12 +174,11 @@ export default function FairyGarden() {
       <ambientLight intensity={0.2} color="#c084fc" />
       <directionalLight position={[3, 6, 2]} intensity={0.3} color="#e0b0ff" />
       <hemisphereLight args={["#9966ff", "#1a1a2e", 0.25]} />
-      <Stars radius={50} depth={30} count={2000} factor={4} fade speed={1} />
+      <Stars radius={50} depth={30} count={600} factor={4} fade speed={1} />
 
       {/* Moon */}
       <group position={[5, 8, -12]}>
-        <mesh><sphereGeometry args={[0.8, 16, 16]} /><meshStandardMaterial color="#e8d8ff" emissive="#c084fc" emissiveIntensity={0.4} /></mesh>
-        <pointLight color="#c084fc" intensity={1.5} distance={25} />
+        <mesh><sphereGeometry args={[0.8, 16, 16]} /><meshStandardMaterial color="#e8d8ff" emissive="#c084fc" emissiveIntensity={0.6} /></mesh>
       </group>
 
       {/* Ground */}
@@ -236,7 +214,7 @@ export default function FairyGarden() {
       <FairyLights from={[-5, 2.8, -4]} to={[3, 2.8, -5]} count={8} color="#c084fc" />
 
       {/* Fireflies */}
-      <Fireflies count={35} />
+      <Fireflies count={12} />
     </>
   );
 }

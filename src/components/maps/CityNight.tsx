@@ -1,7 +1,6 @@
 "use client";
 
-import { useMemo, useRef } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useMemo } from "react";
 import { Stars } from "@react-three/drei";
 import * as THREE from "three";
 
@@ -36,11 +35,9 @@ function Building({ position, width, height, depth, color }: {
   );
 }
 
-function WinLight({ x, y, color, speed, dz }: { x: number; y: number; color: string; speed: number; dz: number }) {
-  const ref = useRef<THREE.Mesh>(null);
-  useFrame((s) => { if (ref.current) (ref.current.material as THREE.MeshStandardMaterial).emissiveIntensity = 0.5 + Math.sin(s.clock.elapsedTime * speed) * 0.5; });
+function WinLight({ x, y, color, dz }: { x: number; y: number; color: string; speed: number; dz: number }) {
   return (
-    <mesh ref={ref} position={[x, y, dz]}>
+    <mesh position={[x, y, dz]}>
       <planeGeometry args={[0.3, 0.35]} />
       <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.8} transparent opacity={0.9} />
     </mesh>
@@ -49,15 +46,12 @@ function WinLight({ x, y, color, speed, dz }: { x: number; y: number; color: str
 
 // ---- Lamp ----
 function Lamp({ position }: { position: [number, number, number] }) {
-  const ref = useRef<THREE.PointLight>(null);
-  useFrame((s) => { if (ref.current) ref.current.intensity = 1.5 + Math.sin(s.clock.elapsedTime * 2 + position[0]) * 0.3; });
   return (
     <group position={position}>
       <mesh position={[0, 1, 0]}><cylinderGeometry args={[0.04, 0.06, 2, 6]} /><meshStandardMaterial color="#555" metalness={0.6} /></mesh>
       <mesh position={[0, 2.1, 0]}><coneGeometry args={[0.15, 0.12, 8]} /><meshStandardMaterial color="#444" /></mesh>
       <mesh position={[0, 2.02, 0]}><sphereGeometry args={[0.06, 8, 8]} /><meshStandardMaterial color="#ffdd57" emissive="#ffdd57" emissiveIntensity={2} /></mesh>
-      <pointLight ref={ref} position={[0, 1.9, 0]} color="#ffdd57" intensity={1.5} distance={5} />
-      <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[0.8, 16]} /><meshStandardMaterial color="#ffdd57" transparent opacity={0.06} /></mesh>
+      <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[0.8, 16]} /><meshStandardMaterial color="#ffdd57" transparent opacity={0.08} /></mesh>
     </group>
   );
 }
@@ -66,8 +60,7 @@ function Lamp({ position }: { position: [number, number, number] }) {
 function Moon() {
   return (
     <group position={[8, 10, -12]}>
-      <mesh><sphereGeometry args={[1.2, 16, 16]} /><meshStandardMaterial color="#fffde8" emissive="#fffde8" emissiveIntensity={0.4} /></mesh>
-      <pointLight color="#fffde8" intensity={1.5} distance={30} />
+      <mesh><sphereGeometry args={[1.2, 16, 16]} /><meshStandardMaterial color="#fffde8" emissive="#fffde8" emissiveIntensity={0.6} /></mesh>
     </group>
   );
 }
@@ -97,7 +90,7 @@ export default function CityNight() {
       <fog attach="fog" args={["#0a0a2e", 10, 30]} />
       <ambientLight intensity={0.12} color="#8888cc" />
       <hemisphereLight args={["#1a1a4e", "#1e1e2e", 0.3]} />
-      <Stars radius={50} depth={30} count={2500} factor={3} fade speed={1} />
+      <Stars radius={50} depth={30} count={800} factor={3} fade speed={1} />
       <Moon />
 
       {buildings.map((b, i) => <Building key={i} position={b.pos} width={b.w} height={b.h} depth={b.d} color={b.c} />)}

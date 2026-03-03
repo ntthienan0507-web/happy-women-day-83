@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useRef } from "react";
-import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { MazeData } from "./MazeGenerator";
 import { getWallPositions } from "./MazeGenerator";
@@ -86,36 +85,24 @@ export default function MazeRenderer({
 function WallDecor({ position, mapType }: {
   position: [number, number, number]; mapType: MapType;
 }) {
-  const ref = useRef<THREE.Mesh>(null);
-  useFrame((s) => {
-    if (!ref.current) return;
-    if (mapType === "garden") {
-      // Glowing mushroom
-      (ref.current.material as THREE.MeshStandardMaterial).emissiveIntensity =
-        0.5 + Math.sin(s.clock.elapsedTime * 2 + position[0]) * 0.3;
-    }
-  });
 
   if (mapType === "city") {
-    // Warning light on wall
     return (
-      <mesh ref={ref} position={[position[0], position[1] + 0.3, position[2]]}>
+      <mesh position={[position[0], position[1] + 0.3, position[2]]}>
         <sphereGeometry args={[0.06, 6, 6]} />
         <meshStandardMaterial color="#ff4444" emissive="#ff0000" emissiveIntensity={0.8} />
       </mesh>
     );
   }
   if (mapType === "garden") {
-    // Glowing mushroom
     return (
       <group position={position}>
         <mesh position={[0, 0.08, 0]}><cylinderGeometry args={[0.02, 0.03, 0.1, 4]} /><meshStandardMaterial color="#ffe4c4" /></mesh>
-        <mesh ref={ref} position={[0, 0.15, 0]}><sphereGeometry args={[0.06, 6, 6, 0, Math.PI * 2, 0, Math.PI / 2]} /><meshStandardMaterial color="#c084fc" emissive="#8b5cf6" emissiveIntensity={0.5} /></mesh>
+        <mesh position={[0, 0.15, 0]}><sphereGeometry args={[0.06, 6, 6, 0, Math.PI * 2, 0, Math.PI / 2]} /><meshStandardMaterial color="#c084fc" emissive="#8b5cf6" emissiveIntensity={0.5} /></mesh>
       </group>
     );
   }
   if (mapType === "sakura") {
-    // Small blossom on wall
     return (
       <mesh position={[position[0], position[1] + 0.15, position[2]]}>
         <sphereGeometry args={[0.08, 6, 6]} />
@@ -124,9 +111,8 @@ function WallDecor({ position, mapType }: {
     );
   }
   if (mapType === "ocean") {
-    // Small coral
     return (
-      <mesh ref={ref} position={[position[0], position[1] + 0.1, position[2]]}>
+      <mesh position={[position[0], position[1] + 0.1, position[2]]}>
         <coneGeometry args={[0.06, 0.15, 5]} />
         <meshStandardMaterial color="#ff4060" emissive="#ff4060" emissiveIntensity={0.2} />
       </mesh>

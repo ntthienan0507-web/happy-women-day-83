@@ -103,17 +103,12 @@ function Bridge() {
 
 // ---- Stone Lantern ----
 function StoneLantern({ position }: { position: [number, number, number] }) {
-  const lightRef = useRef<THREE.PointLight>(null);
-  useFrame((s) => {
-    if (lightRef.current) lightRef.current.intensity = 0.8 + Math.sin(s.clock.elapsedTime * 2 + position[0]) * 0.3;
-  });
   return (
     <group position={position}>
       <mesh position={[0, 0.15, 0]}><cylinderGeometry args={[0.06, 0.08, 0.3, 6]} /><meshStandardMaterial color="#888" /></mesh>
       <mesh position={[0, 0.35, 0]}><boxGeometry args={[0.15, 0.12, 0.15]} /><meshStandardMaterial color="#999" /></mesh>
-      <mesh position={[0, 0.35, 0]}><boxGeometry args={[0.1, 0.1, 0.1]} /><meshStandardMaterial color="#ffdd57" emissive="#ffaa00" emissiveIntensity={1} transparent opacity={0.8} /></mesh>
+      <mesh position={[0, 0.35, 0]}><boxGeometry args={[0.1, 0.1, 0.1]} /><meshStandardMaterial color="#ffdd57" emissive="#ffaa00" emissiveIntensity={1.2} transparent opacity={0.8} /></mesh>
       <mesh position={[0, 0.48, 0]}><coneGeometry args={[0.12, 0.1, 4]} /><meshStandardMaterial color="#777" /></mesh>
-      <pointLight ref={lightRef} position={[0, 0.35, 0]} color="#ffaa44" intensity={0.8} distance={3} />
     </group>
   );
 }
@@ -187,12 +182,11 @@ export default function SakuraPark() {
       <ambientLight intensity={0.25} color="#dda0dd" />
       <directionalLight position={[3, 6, 2]} intensity={0.5} color="#ffb6c1" />
       <hemisphereLight args={["#ff69b4", "#1a1a2e", 0.2]} />
-      <Stars radius={50} depth={30} count={1800} factor={3} fade speed={0.8} />
+      <Stars radius={50} depth={30} count={600} factor={3} fade speed={0.8} />
 
       {/* Moon */}
       <group position={[-6, 9, -14]}>
-        <mesh><sphereGeometry args={[1, 16, 16]} /><meshStandardMaterial color="#fffde8" emissive="#fffde8" emissiveIntensity={0.4} /></mesh>
-        <pointLight color="#fffde8" intensity={1.5} distance={25} />
+        <mesh><sphereGeometry args={[1, 16, 16]} /><meshStandardMaterial color="#fffde8" emissive="#fffde8" emissiveIntensity={0.6} /></mesh>
       </group>
 
       {/* Ground - grass */}
@@ -236,7 +230,7 @@ export default function SakuraPark() {
       <Bench position={[-2.5, 0, 2]} rotation={Math.PI / 2} />
       <Bench position={[2.5, 0, 2]} rotation={-Math.PI / 2} />
 
-      <FallingPetals count={80} />
+      <FallingPetals count={25} />
     </>
   );
 }

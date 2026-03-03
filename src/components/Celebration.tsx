@@ -19,8 +19,8 @@ export default function Celebration({ origin }: { origin: [number, number, numbe
       "#f472b6", "#a78bfa", "#fb923c", "#f43f5e",
     ];
 
-    // Big explosion - 200 particles!
-    for (let i = 0; i < 200; i++) {
+    // Celebration particles
+    for (let i = 0; i < 60; i++) {
       const dir = new THREE.Vector3().randomDirection();
       const speed = 1.5 + Math.random() * 5;
       const types: ("heart" | "flower" | "confetti" | "star")[] = ["heart", "flower", "confetti", "star"];
@@ -106,9 +106,6 @@ export default function Celebration({ origin }: { origin: [number, number, numbe
           </mesh>
         );
       })}
-      {/* Explosion light */}
-      <pointLight position={[origin[0], origin[1] + 2, origin[2]]} color="#ffd700" intensity={5} distance={10} />
-      <pointLight position={[origin[0], origin[1] + 1, origin[2]]} color="#ff69b4" intensity={3} distance={8} />
     </group>
   );
 }

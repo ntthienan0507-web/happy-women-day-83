@@ -67,9 +67,6 @@ export default function TargetMarker({ position }: { position: [number, number, 
         </group>
       </Float>
 
-      {/* Point light */}
-      <pointLight color="#ffd700" intensity={2} distance={6} position={[0, 1.5, 0]} />
-      <pointLight color="#ff69b4" intensity={1} distance={4} position={[0, 0.5, 0]} />
     </group>
   );
 }
