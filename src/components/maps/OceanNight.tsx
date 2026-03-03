@@ -1,0 +1,345 @@
+"use client";
+
+import { useMemo, useRef } from "react";
+import { useFrame } from "@react-three/fiber";
+import { Stars } from "@react-three/drei";
+import * as THREE from "three";
+
+// ---- Animated Ocean Floor ----
+function OceanFloor() {
+  const ref = useRef<THREE.Mesh>(null);
+  useFrame((s) => {
+    if (!ref.current) return;
+    const geo = ref.current.geometry as THREE.PlaneGeometry;
+    const pos = geo.attributes.position;
+    const t = s.clock.elapsedTime;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const y = pos.getY(i);
+      pos.setZ(i, Math.sin(x * 0.5 + t * 0.8) * 0.15 + Math.cos(y * 0.3 + t * 0.6) * 0.1);
+    }
+    pos.needsUpdate = true;
+  });
+
+  return (
+    <mesh ref={ref} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.3, 0]}>
+      <planeGeometry args={[40, 40, 40, 40]} />
+      <meshStandardMaterial color="#0a2a4a" roughness={0.3} metalness={0.5} />
+    </mesh>
+  );
+}
+
+// ---- Water Surface (transparent, above) ----
+function WaterSurface() {
+  const ref = useRef<THREE.Mesh>(null);
+  useFrame((s) => {
+    if (!ref.current) return;
+    const geo = ref.current.geometry as THREE.PlaneGeometry;
+    const pos = geo.attributes.position;
+    const t = s.clock.elapsedTime;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const y = pos.getY(i);
+      pos.setZ(i, Math.sin(x * 0.3 + t) * 0.08 + Math.cos(y * 0.4 + t * 0.7) * 0.06);
+    }
+    pos.needsUpdate = true;
+  });
+
+  return (
+    <mesh ref={ref} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.6, 0]}>
+      <planeGeometry args={[40, 40, 32, 32]} />
+      <meshStandardMaterial color="#1a5a8a" transparent opacity={0.35} roughness={0.1} metalness={0.6} side={THREE.DoubleSide} />
+    </mesh>
+  );
+}
+
+// ---- Coral ----
+function Coral({ position, color = "#ff4060" }: { position: [number, number, number]; color?: string }) {
+  const ref = useRef<THREE.Group>(null);
+  useFrame((s) => {
+    if (ref.current) ref.current.rotation.z = Math.sin(s.clock.elapsedTime * 0.8 + position[0]) * 0.05;
+  });
+
+  return (
+    <group ref={ref} position={position}>
+      {/* Branches */}
+      {Array.from({ length: 5 }).map((_, i) => {
+        const angle = (i / 5) * Math.PI * 2;
+        const h = 0.3 + Math.random() * 0.4;
+        return (
+          <mesh key={i} position={[Math.cos(angle) * 0.1, h / 2, Math.sin(angle) * 0.1]} rotation={[Math.sin(angle) * 0.3, 0, Math.cos(angle) * 0.3]}>
+            <cylinderGeometry args={[0.015, 0.04, h, 5]} />
+            <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.15} />
+          </mesh>
+        );
+      })}
+      {/* Tips */}
+      {Array.from({ length: 5 }).map((_, i) => {
+        const angle = (i / 5) * Math.PI * 2;
+        const h = 0.3 + Math.random() * 0.4;
+        return (
+          <mesh key={`t${i}`} position={[Math.cos(angle) * 0.12, h, Math.sin(angle) * 0.12]}>
+            <sphereGeometry args={[0.025, 5, 5]} />
+            <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.3} />
+          </mesh>
+        );
+      })}
+    </group>
+  );
+}
+
+// ---- Seaweed ----
+function Seaweed({ position }: { position: [number, number, number] }) {
+  const refs = useRef<(THREE.Mesh | null)[]>([]);
+  const count = 3 + Math.floor(Math.random() * 3);
+
+  useFrame((s) => {
+    const t = s.clock.elapsedTime;
+    refs.current.forEach((r, i) => {
+      if (!r) return;
+      r.rotation.z = Math.sin(t * 1.2 + position[0] + i * 0.5) * 0.2;
+      r.rotation.x = Math.sin(t * 0.8 + i) * 0.1;
+    });
+  });
+
+  return (
+    <group position={position}>
+      {Array.from({ length: count }).map((_, i) => (
+        <mesh key={i} ref={(el) => { refs.current[i] = el; }}
+          position={[(i - count / 2) * 0.06, 0.25 + Math.random() * 0.2, 0]}>
+          <cylinderGeometry args={[0.008, 0.015, 0.5 + Math.random() * 0.3, 4]} />
+          <meshStandardMaterial color="#1a8a3a" emissive="#0a5a2a" emissiveIntensity={0.1} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+// ---- Jellyfish ----
+function Jellyfish({ position, color = "#c084fc" }: { position: [number, number, number]; color?: string }) {
+  const ref = useRef<THREE.Group>(null);
+  const baseY = position[1];
+
+  useFrame((s) => {
+    if (!ref.current) return;
+    const t = s.clock.elapsedTime;
+    ref.current.position.y = baseY + Math.sin(t * 0.6 + position[0]) * 0.3;
+    ref.current.position.x = position[0] + Math.sin(t * 0.3 + position[2]) * 0.5;
+    // Pulsing
+    const pulse = 1 + Math.sin(t * 2) * 0.1;
+    ref.current.scale.set(pulse, 1 / pulse, pulse);
+  });
+
+  return (
+    <group ref={ref} position={position}>
+      {/* Bell */}
+      <mesh>
+        <sphereGeometry args={[0.15, 8, 8, 0, Math.PI * 2, 0, Math.PI * 0.6]} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.5} transparent opacity={0.6} side={THREE.DoubleSide} />
+      </mesh>
+      {/* Tentacles */}
+      {Array.from({ length: 6 }).map((_, i) => (
+        <mesh key={i} position={[Math.cos(i * Math.PI / 3) * 0.08, -0.15, Math.sin(i * Math.PI / 3) * 0.08]}>
+          <cylinderGeometry args={[0.005, 0.003, 0.3 + Math.random() * 0.2, 3]} />
+          <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.3} transparent opacity={0.5} />
+        </mesh>
+      ))}
+      <pointLight color={color} intensity={0.3} distance={2} />
+    </group>
+  );
+}
+
+// ---- Fish school ----
+function FishSchool({ center, count = 8, color = "#ffa500" }: {
+  center: [number, number, number]; count?: number; color?: string;
+}) {
+  const refs = useRef<(THREE.Mesh | null)[]>([]);
+  interface FD { offset: THREE.Vector3; speed: number; phase: number; }
+  const fish = useMemo<FD[]>(() =>
+    Array.from({ length: count }, () => ({
+      offset: new THREE.Vector3((Math.random() - 0.5) * 1.5, (Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 1.5),
+      speed: 0.5 + Math.random() * 1,
+      phase: Math.random() * Math.PI * 2,
+    })), [count]);
+
+  useFrame((s) => {
+    const t = s.clock.elapsedTime;
+    fish.forEach((f, i) => {
+      const m = refs.current[i];
+      if (!m) return;
+      const x = center[0] + f.offset.x + Math.sin(t * f.speed + f.phase) * 2;
+      const y = center[1] + f.offset.y + Math.sin(t * 0.5 + f.phase) * 0.2;
+      const z = center[2] + f.offset.z + Math.cos(t * f.speed + f.phase) * 2;
+      m.position.set(x, y, z);
+      m.rotation.y = Math.atan2(
+        Math.cos(t * f.speed + f.phase) * 2,
+        -Math.sin(t * f.speed + f.phase) * 2
+      ) - Math.PI / 2;
+    });
+  });
+
+  return (
+    <group>
+      {fish.map((_, i) => (
+        <mesh key={i} ref={(el) => { refs.current[i] = el; }} scale={0.06}>
+          <coneGeometry args={[0.4, 1.2, 4]} />
+          <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.1} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+// ---- Treasure Chest ----
+function TreasureChest({ position }: { position: [number, number, number] }) {
+  return (
+    <group position={position}>
+      <mesh position={[0, 0.08, 0]}>
+        <boxGeometry args={[0.3, 0.16, 0.2]} />
+        <meshStandardMaterial color="#8B4513" />
+      </mesh>
+      <mesh position={[0, 0.18, 0]}>
+        <boxGeometry args={[0.32, 0.04, 0.22]} />
+        <meshStandardMaterial color="#A0522D" />
+      </mesh>
+      {/* Gold glow */}
+      <mesh position={[0, 0.12, 0.11]}>
+        <boxGeometry args={[0.06, 0.06, 0.02]} />
+        <meshStandardMaterial color="#ffd700" emissive="#ffa500" emissiveIntensity={1} />
+      </mesh>
+      <pointLight position={[0, 0.2, 0]} color="#ffd700" intensity={0.5} distance={1.5} />
+    </group>
+  );
+}
+
+// ---- Bubbles ----
+function Bubbles({ count = 40 }: { count?: number }) {
+  const refs = useRef<(THREE.Mesh | null)[]>([]);
+  interface BD { pos: THREE.Vector3; speed: number; wobble: number; size: number; }
+  const bubbles = useRef<BD[]>(
+    Array.from({ length: count }, () => makeBubble())
+  );
+
+  function makeBubble(): BD {
+    return {
+      pos: new THREE.Vector3((Math.random() - 0.5) * 20, -0.3 + Math.random() * 0.3, (Math.random() - 0.5) * 16),
+      speed: 0.2 + Math.random() * 0.6,
+      wobble: Math.random() * 10,
+      size: 0.02 + Math.random() * 0.05,
+    };
+  }
+
+  useFrame((s, d) => {
+    const t = s.clock.elapsedTime;
+    bubbles.current.forEach((b, i) => {
+      b.pos.y += b.speed * d;
+      b.pos.x += Math.sin(t + b.wobble) * d * 0.2;
+      if (b.pos.y > 0.7) Object.assign(b, makeBubble());
+      const m = refs.current[i];
+      if (m) {
+        m.position.copy(b.pos);
+        m.scale.setScalar(b.size);
+      }
+    });
+  });
+
+  return (
+    <group>
+      {bubbles.current.map((_, i) => (
+        <mesh key={i} ref={(el) => { refs.current[i] = el; }}>
+          <sphereGeometry args={[1, 8, 8]} />
+          <meshStandardMaterial color="#88ccff" emissive="#44aaff" emissiveIntensity={0.3} transparent opacity={0.4} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+// ---- Light Rays ----
+function LightRays() {
+  const refs = useRef<(THREE.Mesh | null)[]>([]);
+  useFrame((s) => {
+    refs.current.forEach((r, i) => {
+      if (!r) return;
+      (r.material as THREE.MeshStandardMaterial).opacity = 0.03 + Math.sin(s.clock.elapsedTime * 0.3 + i * 0.8) * 0.02;
+    });
+  });
+
+  return (
+    <group>
+      {Array.from({ length: 5 }).map((_, i) => (
+        <mesh key={i} ref={(el) => { refs.current[i] = el; }}
+          position={[-6 + i * 3, 0.3, -3]}
+          rotation={[0, 0, 0.1 + i * 0.05]}>
+          <planeGeometry args={[0.5, 3]} />
+          <meshStandardMaterial color="#88ccff" transparent opacity={0.04} side={THREE.DoubleSide} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+// ==================== OCEAN NIGHT MAP ====================
+export default function OceanNight() {
+  const coralPositions = useMemo(() => {
+    const arr: { pos: [number, number, number]; color: string }[] = [];
+    const colors = ["#ff4060", "#ff69b4", "#c084fc", "#ffa500", "#06d6a0", "#ff6b81"];
+    for (let i = 0; i < 25; i++) {
+      arr.push({
+        pos: [(Math.random() - 0.5) * 20, -0.25, (Math.random() - 0.5) * 16],
+        color: colors[Math.floor(Math.random() * colors.length)],
+      });
+    }
+    return arr;
+  }, []);
+
+  return (
+    <>
+      <color attach="background" args={["#020a18"]} />
+      <fog attach="fog" args={["#020a18", 6, 20]} />
+      <ambientLight intensity={0.15} color="#4488cc" />
+      <directionalLight position={[2, 3, 0]} intensity={0.2} color="#88bbff" />
+      <hemisphereLight args={["#1a3a5e", "#020a18", 0.3]} />
+
+      {/* Faint stars visible through water surface */}
+      <Stars radius={50} depth={20} count={500} factor={2} fade speed={0.3} />
+
+      {/* Ocean environment */}
+      <OceanFloor />
+      <WaterSurface />
+      <LightRays />
+      <Bubbles count={45} />
+
+      {/* Ground for walking */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.28, 0]}>
+        <planeGeometry args={[40, 40]} />
+        <meshStandardMaterial color="#0a2a4a" transparent opacity={0.9} />
+      </mesh>
+
+      {/* Corals */}
+      {coralPositions.map((c, i) => <Coral key={i} position={c.pos} color={c.color} />)}
+
+      {/* Seaweed patches */}
+      {Array.from({ length: 15 }).map((_, i) => (
+        <Seaweed key={i} position={[(Math.random() - 0.5) * 18, -0.28, (Math.random() - 0.5) * 14]} />
+      ))}
+
+      {/* Jellyfish */}
+      <Jellyfish position={[-3, 0.1, -2]} color="#c084fc" />
+      <Jellyfish position={[4, 0.2, -4]} color="#ff69b4" />
+      <Jellyfish position={[-5, 0, 3]} color="#06d6a0" />
+      <Jellyfish position={[6, 0.15, 1]} color="#4ac0ff" />
+      <Jellyfish position={[0, 0.25, -6]} color="#ffa500" />
+      <Jellyfish position={[-7, 0.1, -5]} color="#ff6b81" />
+
+      {/* Fish */}
+      <FishSchool center={[3, 0, 2]} count={8} color="#ffa500" />
+      <FishSchool center={[-4, 0.1, -3]} count={6} color="#ff69b4" />
+      <FishSchool center={[0, -0.1, 5]} count={10} color="#4ac0ff" />
+
+      {/* Treasure */}
+      <TreasureChest position={[5, -0.25, -5]} />
+      <TreasureChest position={[-6, -0.25, 4]} />
+    </>
+  );
+}
